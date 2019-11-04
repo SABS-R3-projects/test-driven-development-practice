@@ -9,3 +9,4 @@ __pycache__
 
 ### test caching
 .pytest_cache
+.hypothesis
