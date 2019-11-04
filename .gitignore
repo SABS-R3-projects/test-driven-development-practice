@@ -6,3 +6,6 @@ __pycache__
 
 ### visual studio code
 .vscode
+
+### test caching
+.pytest_cache
