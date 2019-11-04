@@ -15,7 +15,7 @@ def test_euler():
     C = 100.0
 
     # integration paramters
-    dt = 0.01 # time steps
+    dt = 0.001 # time steps
     t_0 = 0.0 # initial time
     t_final = 10.0 # final time
     y_0 = 1.0 # initial condition
@@ -27,7 +27,7 @@ def test_euler():
     logistic_model = euler.euler(func)
     numeric = logistic_model.integrate(dt=dt, t_0=t_0, t_final=t_final, y_0=y_0)
 
-    tolerance = 1
+    tolerance = 0.1
     assert np.all((analytic - numeric) ** 2 < tolerance ** 2)
 
 
