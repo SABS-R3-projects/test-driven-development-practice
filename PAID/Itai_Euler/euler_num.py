@@ -10,7 +10,7 @@ class ODENumerical:
         self.dt = 0.5
 
     def differential_func(self, N):
-        return self.lambda_val*(1 - (N/self.c))*N
+        return self.lambda_val*(1 - (float(N)/self.c))*N
 
     def euler_solution(self):
         #dt = 0.15
@@ -22,23 +22,18 @@ class ODENumerical:
         euler_array = np.asanyarray(euler_array)
         return euler_array
 
-
     def euler_with_noise(self):
-        numerical_sol = np.asanyarray(self.euler_solution())
+        numerical_sol = self.euler_solution()
         mu, sigma = 0, 0.5
         # creating a noise with the same dimension as the dataset
         noise = np.random.normal(mu, sigma, [np.shape(numerical_sol)[0], ])
         numerical_noisy = numerical_sol + noise
         return numerical_noisy
 
-    def scoring_func(self):
-
+    def scoring_func(self, lambda_val):
         numerical_noisy = self.euler_with_noise()
         clean_data = self.euler_solution()
-        scoring = lambda lambda_val, N: sum((numerical_noisy[i]-lambda_val*(1 - (N/self.c))*N)**2 for i,N in zip (range(len(clean_data)), clean_data))
-        xopt, es = cma.fmin2(scoring, [0.1, 1], 0.5)
-        print(xopt)
-        print(es)
+        return sum((numerical_noisy[i]-lambda_val*self.dt*(1 - (float(N)/self.c))*N)**2 for i,N in enumerate(clean_data))
 
 a = ODENumerical()
-a.scoring_func()
+print(a.scoring_func(a.lambda_val))
