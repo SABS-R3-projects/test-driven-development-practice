@@ -1,4 +1,5 @@
 from PAID.Curve_Fitting.creating_data import create_data, lgd
+from PAID.Curve_Fitting.euler_method import euler
 import numpy as np
 import matplotlib.pyplot as plt
 import math
