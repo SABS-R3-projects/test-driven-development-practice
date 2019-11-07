@@ -3,7 +3,7 @@ import numpy as np
 import cma
 class ODENumerical:
 
-    def __init__(self, lambda_val = 0.1, n_init = 1, c = 10):
+    def __init__(self, lambda_val = 0.095, n_init = 1, c = 10):
         self.lambda_val = lambda_val
         self.n_init = n_init
         self.c = c
@@ -16,7 +16,7 @@ class ODENumerical:
         #dt = 0.15
         euler_array = [self.n_init]
         n = self.n_init
-        while len(euler_array) <= 500:
+        while len(euler_array) <= 150:
             n += self.dt*self.differential_func(n)
             euler_array.append(n)
         euler_array = np.asanyarray(euler_array)
@@ -30,10 +30,22 @@ class ODENumerical:
         numerical_noisy = numerical_sol + noise
         return numerical_noisy
 
+    def plot_func(self):
+        euler_array = self.euler_solution()
+        euler_with_noise = self.euler_with_noise()
+        x_values = np.arange(0,len(euler_array),1)
+        plt.scatter(x_values,euler_with_noise, color = "yellow", edgecolors="black")
+        plt.scatter(x_values,euler_array, color = "red")
+        plt.ylabel("N values")
+        plt.xlabel("Time scale")
+        plt.legend(["Noisy solution + Noise", "Numerical Solution"])
+        plt.title("Solving the Logistic function with Euler's Method")
+        plt.show()
+
     def scoring_func(self, lambda_val):
         numerical_noisy = self.euler_with_noise()
         clean_data = self.euler_solution()
         return sum((numerical_noisy[i]-lambda_val*self.dt*(1 - (float(N)/self.c))*N)**2 for i,N in enumerate(clean_data))
 
 a = ODENumerical()
-print(a.scoring_func(a.lambda_val))
+print(a.plot_func())
