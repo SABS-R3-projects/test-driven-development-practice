@@ -9,6 +9,8 @@ class ODENumerical:
         self.c = c
         self.dt = 0.5
         self.minimization_sol = []
+        self.euler_solution_array = []
+        self.euler_with_noise_array = []
 
     def differential_func(self, N):
         return self.lambda_val*(1 - (float(N)/self.c))*N
@@ -20,6 +22,7 @@ class ODENumerical:
             n += self.dt*self.differential_func(n)
             euler_array.append(n)
         euler_array = np.asanyarray(euler_array)
+        self.euler_solution_array = euler_array
         return euler_array
 
     def euler_with_noise(self):
@@ -28,6 +31,7 @@ class ODENumerical:
         # creating a noise with the same dimension as the dataset
         noise = np.random.normal(mu, sigma, [np.shape(numerical_sol)[0], ])
         numerical_noisy = numerical_sol + noise
+        self.euler_with_noise_array = numerical_noisy
         return numerical_noisy
 
     def plot_func(self):
@@ -42,15 +46,29 @@ class ODENumerical:
         plt.title("Solving the Logistic function with Euler's Method")
         plt.show()
 
+    def least_squares_calculator(self, array):
+        self.euler_solution()
+        self.euler_with_noise()
+        least_squares = 0
+        first_term = self.n_init
+        for i, j in enumerate(self.euler_solution_array):
+            if i == 0:
+                least_squares += (self.euler_with_noise_array[0] - self.euler_solution_array[0])**2
+            else:
+                #first_term += self.dt*self.differential_func(first_term)
+                #first_term += self.dt*self.lambda_val*(1 - (float(first_term)/self.c))*first_term
+                first_term += self.dt*array[0]*(1 - (float(first_term)/array[1]))*first_term
+                least_squares += (self.euler_with_noise_array[i] - first_term) ** 2
+        #print(least_squares)
+        return least_squares
+
+
     def scoring_func(self):
-        numerical_noisy = self.euler_with_noise()
-        clean_data = self.euler_solution()
-        objective_function = lambda array: sum((numerical_noisy[i]-array[0]*self.dt*(1 - (float(N)/array[1]))*N)**2 for i,N in enumerate(clean_data))
-        self.minimization_sol, es = cma.fmin2(objective_function, [0.095, 10], 0.5)
+        self.minimization_sol, es = cma.fmin2(self.least_squares_calculator,[0.095, 10], 0.5)
         print(self.minimization_sol)
 
+
 a = ODENumerical()
+#a.plot_func()
+#a.least_squares_calculator()
 a.scoring_func()
-a.lambda_val = a.minimization_sol[0]
-a.c = a.minimization_sol[1]
-a.plot_func()
