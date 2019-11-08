@@ -55,20 +55,22 @@ class ODENumerical:
             if i == 0:
                 least_squares += (self.euler_with_noise_array[0] - self.euler_solution_array[0])**2
             else:
-                #first_term += self.dt*self.differential_func(first_term)
-                #first_term += self.dt*self.lambda_val*(1 - (float(first_term)/self.c))*first_term
                 first_term += self.dt*array[0]*(1 - (float(first_term)/array[1]))*first_term
                 least_squares += (self.euler_with_noise_array[i] - first_term) ** 2
-        #print(least_squares)
         return least_squares
-
 
     def scoring_func(self):
         self.minimization_sol, es = cma.fmin2(self.least_squares_calculator,[0.095, 10], 0.5)
         print(self.minimization_sol)
-
+        print("Updating the values of lambda and c")
+        self.lambda_val = self.minimization_sol[0]
+        self.c = self.minimization_sol[1]
+        new_fit = self.euler_solution()
+        plt.plot(self.euler_with_noise_array)
+        plt.plot(new_fit)
+        plt.show()
 
 a = ODENumerical()
-#a.plot_func()
-#a.least_squares_calculator()
 a.scoring_func()
+
+
