@@ -9,7 +9,6 @@ class ODENumerical:
         self.c = c
         self.dt = 0.5
         self.minimization_sol = []
-        self.numerical_noisy = []
 
     def differential_func(self, N):
         return self.lambda_val*(1 - (float(N)/self.c))*N
@@ -36,7 +35,7 @@ class ODENumerical:
         euler_with_noise = self.euler_with_noise()
         x_values = np.arange(0,len(euler_array),1)
         plt.scatter(x_values,euler_with_noise, color = "yellow", edgecolors="black")
-        #plt.scatter(x_values,euler_array, color = "red")
+        plt.scatter(x_values,euler_array, color = "red")
         plt.ylabel("N values")
         plt.xlabel("Time scale")
         plt.legend(["Euler solution + Noise", "Numerical Solution"])
@@ -46,10 +45,12 @@ class ODENumerical:
     def scoring_func(self):
         numerical_noisy = self.euler_with_noise()
         clean_data = self.euler_solution()
-        objective_function = lambda array: sum((numerical_noisy[i]-array[0]*array[1]*(1 - (float(N)/self.c))*N)**2 for i,N in enumerate(clean_data))
-        self.minimization_sol, es = cma.fmin2(objective_function, [0.095, 0.5], 0.5)
+        objective_function = lambda array: sum((numerical_noisy[i]-array[0]*self.dt*(1 - (float(N)/array[1]))*N)**2 for i,N in enumerate(clean_data))
+        self.minimization_sol, es = cma.fmin2(objective_function, [0.095, 10], 0.5)
         print(self.minimization_sol)
 
 a = ODENumerical()
 a.scoring_func()
+a.lambda_val = a.minimization_sol[0]
+a.c = a.minimization_sol[1]
 a.plot_func()
