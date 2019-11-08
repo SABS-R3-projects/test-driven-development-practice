@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import cma
+
+
 class ODENumerical:
 
-    def __init__(self, lambda_val = 0.095, n_init = 1, c = 10):
+    def __init__(self, lambda_val=0.095, n_init=1, c=10):
         self.lambda_val = lambda_val
         self.n_init = n_init
         self.c = c
@@ -13,13 +15,13 @@ class ODENumerical:
         self.euler_with_noise_array = []
 
     def differential_func(self, N):
-        return self.lambda_val*(1 - (float(N)/self.c))*N
+        return self.lambda_val * (1 - (float(N) / self.c)) * N
 
     def euler_solution(self):
         euler_array = [self.n_init]
         n = self.n_init
         while len(euler_array) <= 150:
-            n += self.dt*self.differential_func(n)
+            n += self.dt * self.differential_func(n)
             euler_array.append(n)
         euler_array = np.asanyarray(euler_array)
         self.euler_solution_array = euler_array
@@ -37,9 +39,9 @@ class ODENumerical:
     def plot_func(self):
         euler_array = self.euler_solution()
         euler_with_noise = self.euler_with_noise()
-        x_values = np.arange(0,len(euler_array),1)
-        plt.scatter(x_values,euler_with_noise, color = "yellow", edgecolors="black")
-        plt.scatter(x_values,euler_array, color = "red")
+        x_values = np.arange(0, len(euler_array), 1)
+        plt.scatter(x_values, euler_with_noise, color="yellow", edgecolors="black")
+        plt.scatter(x_values, euler_array, color="red")
         plt.ylabel("N values")
         plt.xlabel("Time scale")
         plt.legend(["Euler solution + Noise", "Numerical Solution"])
@@ -53,14 +55,14 @@ class ODENumerical:
         first_term = self.n_init
         for i, j in enumerate(self.euler_solution_array):
             if i == 0:
-                least_squares += (self.euler_with_noise_array[0] - self.euler_solution_array[0])**2
+                least_squares += (self.euler_with_noise_array[0] - self.euler_solution_array[0]) ** 2
             else:
-                first_term += self.dt*array[0]*(1 - (float(first_term)/array[1]))*first_term
+                first_term += self.dt * array[0] * (1 - (float(first_term) / array[1])) * first_term
                 least_squares += (self.euler_with_noise_array[i] - first_term) ** 2
         return least_squares
 
     def scoring_func(self):
-        self.minimization_sol, es = cma.fmin2(self.least_squares_calculator,[0.095, 10], 0.5)
+        self.minimization_sol, es = cma.fmin2(self.least_squares_calculator, [0.095, 10], 0.5)
         print(self.minimization_sol)
         print("Updating the values of lambda and c")
         self.lambda_val = self.minimization_sol[0]
@@ -68,9 +70,9 @@ class ODENumerical:
         new_fit = self.euler_solution()
         plt.plot(self.euler_with_noise_array)
         plt.plot(new_fit)
+        plt.legend(["Noisy data", "Optimized fit"])
         plt.show()
+
 
 a = ODENumerical()
 a.scoring_func()
-
-
