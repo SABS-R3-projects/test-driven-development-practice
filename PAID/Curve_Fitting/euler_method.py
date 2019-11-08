@@ -27,4 +27,15 @@ class euler(object):
 
         return y_solution
 
+def logistic_growth_euler(time_arr, N_lst, time_step, No=1.0, C=100.0, l=1.0):
+    Nt = No
+    t = 0
+    N_lst.append(No)
+    t += time_step
+    while t < time_arr[-1]:
+        N_ = l * Nt * (1 - (Nt / C))
+        N_lst.append(N_lst[-1] + (time_step * N_))
+        Nt = N_lst[-1]
+        t += time_step
+    return N_lst
 
