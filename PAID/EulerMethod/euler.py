@@ -7,7 +7,7 @@ class euler(object):
         model {func} -- Function to implement the right hand side of the ODE.
 
     Methods:
-        integrate -- finds approximate solution to IVP (t_0, y_0).
+        integrate -- Finds approximate solution to IVP {(t_0, y_0), ODE}.
     """
     def __init__(self, model):
         self.model = model
