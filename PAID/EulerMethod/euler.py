@@ -1,6 +1,14 @@
 import numpy as np
 
 class euler(object):
+    """Class to numerically solve Initial Value Problems (IVP) with Euler's method.
+
+    Attributes:
+        model {func} -- Function to implement the right hand side of the ODE.
+
+    Methods:
+        integrate -- finds approximate solution to IVP (t_0, y_0).
+    """
     def __init__(self, model):
         self.model = model
 
@@ -16,7 +24,6 @@ class euler(object):
         Returns:
             y_solution {np.array} -- numerical solution to ODE.
         """
-
         times = np.arange(t_0, t_final, h)
         y_solution = np.empty(len(times))
         for step, time_steps in enumerate(times):
