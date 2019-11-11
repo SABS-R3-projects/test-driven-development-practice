@@ -22,7 +22,7 @@ class euler(object):
             y_0 {float} -- initial value of state variable.
 
         Returns:
-            y_solution {np.array} -- numerical solution to ODE.
+            solution {np.array} -- numerical solution to ODE (times, y_values).
         """
         times = np.arange(t_0, t_final, h)
         y_solution = np.empty(len(times))
@@ -32,6 +32,7 @@ class euler(object):
             else:
                 y_solution[step] = y_solution[step-1] + h * self.model(time_steps-h, y_solution[step-1])
 
-        return y_solution
+        solution = np.vstack(tup=(times, y_solution))
+        return solution
 
 

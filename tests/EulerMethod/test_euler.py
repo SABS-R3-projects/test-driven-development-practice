@@ -27,7 +27,7 @@ def test_euler():
     # logistic growth ODE
     model = lambda t, N: Lambda * N * (1 - N / C)
     logistic_model = euler.euler(model)
-    numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)
+    numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)[1, :]
 
     tolerance = 0.1
     assert np.all((analytic - numeric) ** 2 < tolerance ** 2)
@@ -53,7 +53,7 @@ def test_convergence():
     for id_h, h in enumerate(h_array):
         times = np.arange(start=t_0, stop=t_final, step=h)
         analytic = exponential_growth(times, Lambda=Lambda)
-        numeric = exponential_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)
+        numeric = exponential_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)[1, :]
         error[id_h] = abs(analytic[-1] - numeric[-1])
 
     # find median gradient and make sure it doesn't vary too much, i.e. linear scaling.
@@ -84,7 +84,7 @@ class TestSimple(unittest.TestCase):
         # logistic growth ODE
         model = lambda t, x: Lambda * x * (1 - x)
         logistic_model = euler.euler(model)
-        numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)
+        numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)[1, :]
         squared_distance = (analytic - numeric) ** 2
 
         tolerance = 0.01
@@ -113,7 +113,7 @@ class TestSimple(unittest.TestCase):
         # logistic growth ODE
         model = lambda t, x: Lambda * x * (1 - x)
         logistic_model = euler.euler(model)
-        numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)
+        numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)[1, :]
         squared_distance = (analytic - numeric) ** 2
 
         tolerance = 0.01
@@ -142,7 +142,7 @@ class TestSimple(unittest.TestCase):
         # logistic growth ODE
         model = lambda t, x: Lambda * x * (1 - x)
         logistic_model = euler.euler(model)
-        numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)
+        numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)[1, :]
         squared_distance = (analytic - numeric) ** 2
 
         tolerance = 0.01
