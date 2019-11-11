@@ -1,8 +1,8 @@
 import numpy as np
 
 class euler(object):
-    def __init__(self, func):
-        self.func = func
+    def __init__(self, model):
+        self.model = model
 
     def integrate(self, h, t_0, t_final, y_0):
         """Method to find the numerical solution of the ODE in the interval [t_0, t_final].
@@ -23,7 +23,7 @@ class euler(object):
             if step == 0:
                 y_solution[step] = y_0
             else:
-                y_solution[step] = y_solution[step-1] + h * self.func(time_steps-h, y_solution[step-1])
+                y_solution[step] = y_solution[step-1] + h * self.model(time_steps-h, y_solution[step-1])
 
         return y_solution
 

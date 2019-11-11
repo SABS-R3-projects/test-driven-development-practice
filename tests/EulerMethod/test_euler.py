@@ -5,6 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from PAID.EulerMethod import euler
+from tests.exact_models.models import logistic_growth, logistic_growth_dimensionless
 
 # unittest
 def test_euler():
@@ -24,8 +25,8 @@ def test_euler():
     times = np.arange(start=t_0, stop=t_final, step=h)
     analytic = logistic_growth(times, C=C, Lambda=Lambda)
     # logistic growth ODE
-    func = lambda t, N: Lambda * N * (1 - N / C)
-    logistic_model = euler.euler(func)
+    model = lambda t, N: Lambda * N * (1 - N / C)
+    logistic_model = euler.euler(model)
     numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)
 
     tolerance = 0.1
@@ -51,8 +52,8 @@ def test_euler():
 #         times = np.arange(start=t_0, stop=t_final, step=h)
 #         analytic = logistic_growth(times, C=C, Lambda=Lambda)
 #         # logistic growth ODE
-#         func = lambda t, N: Lambda * N * (1 - N / C)
-#         logistic_model = euler.euler(func)
+#         model = lambda t, N: Lambda * N * (1 - N / C)
+#         logistic_model = euler.euler(model)
 #         numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)
 
 #         #cumulative_error[id_h] = np.linalg.norm(x=analytic - numeric, ord=1)
@@ -79,8 +80,8 @@ class TestSimple(unittest.TestCase):
         analytic = logistic_growth_dimensionless(times, Lambda=Lambda)
 
         # logistic growth ODE
-        func = lambda t, x: Lambda * x * (1 - x)
-        logistic_model = euler.euler(func)
+        model = lambda t, x: Lambda * x * (1 - x)
+        logistic_model = euler.euler(model)
         numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)
 
         tolerance = 0.1
@@ -102,8 +103,8 @@ class TestSimple(unittest.TestCase):
         analytic = logistic_growth_dimensionless(times, Lambda=Lambda)
 
         # logistic growth ODE
-        func = lambda t, x: Lambda * x * (1 - x)
-        logistic_model = euler.euler(func)
+        model = lambda t, x: Lambda * x * (1 - x)
+        logistic_model = euler.euler(model)
         numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)
 
         tolerance = 0.1
@@ -127,48 +128,9 @@ class TestSimple(unittest.TestCase):
         analytic = logistic_growth_dimensionless(times, t_0=t_0, Lambda=Lambda)
 
         # logistic growth ODE
-        func = lambda t, x: Lambda * x * (1 - x)
-        logistic_model = euler.euler(func)
+        model = lambda t, x: Lambda * x * (1 - x)
+        logistic_model = euler.euler(model)
         numeric = logistic_model.integrate(h=h, t_0=t_0, t_final=t_final, y_0=y_0)
 
         tolerance = 0.1
         assert np.all((analytic - numeric) ** 2 <= tolerance ** 2)
-
-
-
-
-def logistic_growth(times, t_0=0.0, N_0=1.0, C=100.0, Lambda=1.0):
-    '''
-    Example ODE for testing that we know the analytical solution of.
-
-    args:
-     times: np.array of time points.
-     t_0: Initial time.
-     N_0: Initial population size.
-     C: Carrying capacity / maximal population size.
-     Lambda: exponential growth factor.
-
-    return:
-     np.array of logistic function evaluated at times 'times + t_0'.
-    '''
-    times -= t_0 # applying time off-set
-    result = C / (1 + (C / N_0 - 1) * np.exp(-Lambda * times))
-    return result
-
-
-def logistic_growth_dimensionless(times, t_0=0.0, x_0=0.1, Lambda=1.0):
-    '''
-    Example ODE for testing that we know the analytical solution of. This version rescales N by C, i.e. x:= N/C.
-
-    args:
-     times: np.array of time points.
-     t_0: Initial time.
-     x_0: Initial population size.
-     Lambda: exponential growth factor.
-
-    return:
-     np.array of logistic function evaluated at times 'times + t_0'.
-    '''
-    times -= t_0 # applying time off-set
-    result = x_0 / (x_0 + (1 - x_0) * np.exp(-Lambda * times))
-    return result
