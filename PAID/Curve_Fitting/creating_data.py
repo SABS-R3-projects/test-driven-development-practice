@@ -8,4 +8,4 @@ def create_data(times, t, x, l):
     noise = np.random.normal(0, 0.05, len(times)) + signal
     plt.plot(times, signal)
     plt.scatter(times, noise, s=10)
-    return noise, signal
+    return noise
