@@ -19,7 +19,7 @@ class CurveBestFit:
     def minimize_error(self, euler_accuracy):
         for i in range(len(self.N_values)):
             r_points = []
-            N_0 = round(self.N_values[i], 3)
+            N_0 = round(self.N_values[i], 2)
             for j in range(1, len(self.times)-1):
                 self.find_r_value(j, N_0, r_points)
             for r in r_points:
@@ -40,15 +40,15 @@ class CurveBestFit:
     def calculate_error(self, r_fit):
         total_error = 0
         for i in range(len(self.times)):
-            diff = (self.data[i] - r_fit[round(self.times[i], 3)]) ** 2
+            diff = (self.data[i] - r_fit[round(self.times[i], 2)]) ** 2
             total_error += diff
         return total_error
 
 
 def main():
     N_accuracy = 0.1
-    data_points = 100
-    euler_accuracy = 0.001
+    data_points = 10
+    euler_accuracy = 0.01
     times = np.arange(0, 15, 15.0 / data_points)
     euler_times = np.arange(0.0, 15.0, euler_accuracy)
     t_0 = 0.0
