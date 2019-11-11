@@ -1,9 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import cma
+
+
 class ODENumerical:
 
-    def __init__(self, lambda_val = 0.095, n_init = 1, c = 100):
+    def __init__(self, lambda_val = 0.095, n_init = 1, c = 10):
+
         self.lambda_val = lambda_val
         self.n_init = n_init
         self.c = c
@@ -18,7 +21,7 @@ class ODENumerical:
     def euler_solution(self):
         euler_array = [self.n_init]
         n = self.n_init
-        while len(euler_array) <= 250:
+        while len(euler_array) <= 150:
             n += self.dt*self.differential_func(n)
             euler_array.append(n)
         euler_array = np.asanyarray(euler_array)
@@ -27,7 +30,7 @@ class ODENumerical:
 
     def euler_with_noise(self):
         numerical_sol = self.euler_solution()
-        mu, sigma = 0, 5
+        mu, sigma = 0, 0.5
         # creating a noise with the same dimension as the dataset
         noise = np.random.normal(mu, sigma, [np.shape(numerical_sol)[0], ])
         numerical_noisy = numerical_sol + noise
@@ -42,7 +45,7 @@ class ODENumerical:
         plt.plot(euler_array, color = "red")
         plt.ylabel("N values")
         plt.xlabel("Time scale")
-        plt.legend(["Euler solution + Noise", "Numerical Solution"])
+        plt.legend(["Numerical Solution","Euler solution + Noise"])
         plt.title("Solving the Logistic function with Euler's Method")
         plt.show()
 
