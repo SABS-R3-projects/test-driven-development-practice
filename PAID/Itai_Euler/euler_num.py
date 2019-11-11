@@ -62,7 +62,7 @@ class ODENumerical:
         x_values = np.arange(0, len(self.euler_solution_array), 1)
         self.minimization_sol, es = cma.fmin2(self.least_squares_calculator,[0.095, 10], 0.5)
         print(self.minimization_sol)
-        print("="*80)
+        print("="*81)
         print("Updating the values of lambda and c")
         self.lambda_val = self.minimization_sol[0]
         self.c = self.minimization_sol[1]
