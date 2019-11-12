@@ -1,11 +1,24 @@
 import cma
 import numpy as np
 import matplotlib.pyplot as plt
+from abc import ABC, abstractmethod
+from typing import Callable, List
 
 from PAID.EulerMethod.euler import euler
 
-class InferenceProblem(object):
-    def __init__(self, model, data, h=0.001):
+class AbstractInferenceProblem(ABC):
+    # This method infers the parameters of a model that capture some observed data according to some objective function the best.
+    @abstractmethod
+    def infer_parameters(self, y_0: float, initial_parameters: List[float], step_size: float) -> np.ndarray:
+        raise NotImplementedError('Method not implemented')
+
+    # This method graphically visualises the infered model and the provided data.
+    @abstractmethod
+    def plot(self) -> None:
+        raise NotImplementedError('Method not implemented')
+
+class InferenceProblem(AbstractInferenceProblem):
+    def __init__(self, model: Callable[[float, float, List[float]], float], data: np.ndarray, h=0.001) -> None:
         if data.ndim != 2:
             raise AssertionError('data must be a 2 dimensional np.array of the form [[t1, t2, ...], [y1, y2, ...]]')
         if data.shape[0] != 2:
@@ -18,7 +31,7 @@ class InferenceProblem(object):
         self.data_y = data[1, :]
         self.h = h # step-size to integrate ODE.
 
-    def infer_parameters(self, y_0, initial_parameters, step_size=0.5):
+    def infer_parameters(self, y_0: float, initial_parameters: List[float], step_size=0.5) -> np.ndarray:
         """Infers set of parameters that minimises an objective function (so far least squares).
 
         Arguments:
@@ -36,7 +49,7 @@ class InferenceProblem(object):
         self.optimal_parameters, _ = cma.fmin2(self._objective_function, initial_parameters, step_size)
         return self.optimal_parameters
 
-    def plot(self):
+    def plot(self) -> None:
         """Method to visualise the success/failure of the parameter inference.
         """
         # Solve ODEmodel with otimal parameters.
@@ -60,11 +73,11 @@ class InferenceProblem(object):
 
         plt.show()
 
-    def _objective_function(self, parameters):
+    def _objective_function(self, parameters: List[float]) -> float:
         """Least squares objective function to be minimised in the process of parameter inference.
 
         Arguments:
-            parameters {list[float]} -- Set of parameters that are used to solve the ODE model.
+            parameters {List[float]} -- Set of parameters that are used to solve the ODE model.
                 The last parameter i.e. parameters[-1] is assumed to be the initial value of the
                 state variable.
         Return:
@@ -83,7 +96,7 @@ class InferenceProblem(object):
 
         return squared_distance
 
-    def _interpolate_numerical_solution(self, numerical_solution):
+    def _interpolate_numerical_solution(self, numerical_solution: np.ndarray) -> np.ndarray:
         """Interpolates the numerical solution of the ODE to evaluate it at the time points corresponding to the data.
 
         Arguments:
@@ -99,4 +112,22 @@ class InferenceProblem(object):
         interpolated_solution = np.vstack(tup=(self.data_time, numerical_estimate))
 
         return interpolated_solution
+
+
+class MCMCInferenceProblem(InferenceProblem):
+    def __init__(self, model: Callable[[float, float, List[float]], float], data: np.ndarray, h=0.001) -> None:
+        super(MCMCInferenceProblem, self).__init__(self, model, h)
+
+    def infer_parameters(self):
+        # find posterior distributions for parameters (choice for prior, choice for noise model?, number iterations)
+        ## propose step (choice for step distribution)
+        ## compute posterior
+        ## accept/ reject step based on ratio
+        pass
+
+    def plot(self):
+        # plot parameter posteriors
+        # plot ideal solution
+        # plot distribution of solution based on sampling parameters from posterior.
+        pass
 
