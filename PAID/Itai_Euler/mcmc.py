@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-mod1 = lambda t : np.random.normal(10,3,t)
+mod1 = lambda t: np.random.normal(10,3,t)
 
 #Form a population of 30,000 individual, with average=10 and scale=3
 population = mod1(30000)
@@ -14,5 +14,5 @@ ax.hist( observation,bins=35 ,)
 ax.set_xlabel("Value")
 ax.set_ylabel("Frequency")
 ax.set_title("Figure 1: Distribution of 1000 observations sampled from a population of 30,000 with mu=10, sigma=3")
-mu_obs=observation.mean()
+mu_obs = observation.mean()
 plt.show()
