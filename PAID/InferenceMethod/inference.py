@@ -15,10 +15,10 @@ class InferenceProblem(object):
         self.data_y = data[1, :]
         self.h = h # step-size to integrate ODE.
 
-    def infer_parameters(self, y_0, initial_parameters, step_size):
+    def infer_parameters(self, y_0, initial_parameters, step_size=0.5):
         initial_parameters.append(y_0)
-        xopt, es = cma.fmin2(self._objective_function, initial_parameters, step_size)
-        return xopt, es
+        xopt, _ = cma.fmin2(self._objective_function, initial_parameters, step_size)
+        return xopt
 
     def _objective_function(self, parameters):
         """Least squares objective function to be minimised in the process of parameter inference.
@@ -36,9 +36,10 @@ class InferenceProblem(object):
         model = euler(ODEmodel)
         t_0 = self.data_time[0]
         t_final = self.data_time[-1]
-        numerical_estimate = model.integrate(h=self.h, t_0=t_0, t_final=t_final, y_0=parameters[1])
-
-        squared_distance = np.sum((self.data_y - numerical_estimate) ** 2)
+        numerical_estimate = model.integrate(h=self.h, t_0=t_0, t_final=t_final, y_0=parameters[-1])
+        interpolated_solution = self._interpolate_numerical_solution(numerical_estimate)
+        interpolated_solution_yvalues = interpolated_solution[1, :]
+        squared_distance = np.sum((self.data_y - interpolated_solution_yvalues) ** 2)
 
         return squared_distance
 

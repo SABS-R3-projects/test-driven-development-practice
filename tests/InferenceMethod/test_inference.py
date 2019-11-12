@@ -16,7 +16,7 @@ def test_infer_parameters():
 
     ### generate data
     scale = 0.01
-    data_time = np.linspace(0, 10, 1000)
+    data_time = np.linspace(0, 10, 100)
     exact_solution = logistic_growth_dimensionless(times=data_time, x_0=x_0, Lambda=Lambda)
 
     gen = DataGenerator()
@@ -27,14 +27,15 @@ def test_infer_parameters():
 
     problem = InferenceProblem(ODEmodel, data)
 
-    initial_parameters = [3.0, 0.2]
+    initial_parameters = [3.0] # initial lambda
+    initial_y0 = 0.3
     step_size = 0.1
-    estimated_parameters, idk = problem.infer_parameters(initial_parameters, step_size)
+    estimated_parameters = problem.infer_parameters(y_0=initial_y0, initial_parameters=initial_parameters, step_size=step_size)
 
     print('estimated params: ', estimated_parameters)
     print('exact params: ', exact_parameters)
 
-    assert True
+    assert np.allclose(a=estimated_parameters, b=exact_parameters, rtol=5.0e-2)
 
 
 def test_objective_function():
@@ -43,7 +44,7 @@ def test_objective_function():
       test case 2 - Comparing to manufactured data points y = 2. Hence squared distance is 1 * number of data points.
     """
     ### exact parameters
-    exact_parameters = [np.nan, 1.0]
+    exact_parameters = [np.nan, 1.0] # this model only has one parameter - x_0.
     Lambda, x_0 = exact_parameters
 
     """test case 1:"""
@@ -62,9 +63,7 @@ def test_objective_function():
     expected_squared_distance = 0.0
 
     if not np.isclose(a=squared_distance, b=expected_squared_distance, atol=1.0e-08):
-        print('squared_distance: ', squared_distance, expected_squared_distance)
         raise ValueError("Objective function does not return 0 when it is supposed to.")
-
 
     """test case 2:"""
     ### generate data
@@ -86,9 +85,9 @@ def test_objective_function():
 
 
 def test_interpolate_numerical_solution():
-    """Test whether function is capable of producing linear interpolations between solution that matches input data.
+    """Test whether function is capable of producing linear interpolations between solution that matches input the data time points.
 
-    Test case 1: Non-dynamic model
+    Test case 1: Non-dynamic model.
     Test case 2: Model that is linear in time.
     """
     ### exact parameters and integration step size
@@ -100,7 +99,7 @@ def test_interpolate_numerical_solution():
 
     """test case 1:"""
     ### generate data
-    data_time = np.linspace(0, 10, 1000)
+    data_time = np.linspace(0, 10, 3000)
     data_time = np.random.choice(a=data_time, size=100) # random sample of times.
     exact_solution = np.full(shape=100, fill_value=y_0)
 
@@ -122,7 +121,7 @@ def test_interpolate_numerical_solution():
 
     """test case 2:"""
     ### generate data
-    data_time = np.linspace(0, 10, 1000)
+    data_time = np.linspace(0, 10, 3000)
     data_time = np.random.choice(a=data_time, size=100) # random sample of times.
     exact_solution = np.full(shape=100, fill_value=y_0) + data_time
 
