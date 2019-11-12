@@ -1,5 +1,6 @@
-import numpy as np
 import cma
+import numpy as np
+import matplotlib.pyplot as plt
 
 from PAID.EulerMethod.euler import euler
 
@@ -9,6 +10,8 @@ class InferenceProblem(object):
             raise AssertionError('data must be a 2 dimensional np.array of the form [[t1, t2, ...], [y1, y2, ...]]')
         if data.shape[0] != 2:
             raise AssertionError('data must be a 2 dimensional np.array of the form [[t1, t2, ...], [y1, y2, ...]]')
+        if h <= 0:
+            raise ValueError('Step-size must be positive.')
 
         self.model = model
         self.data_time = data[0, :]
@@ -16,9 +19,46 @@ class InferenceProblem(object):
         self.h = h # step-size to integrate ODE.
 
     def infer_parameters(self, y_0, initial_parameters, step_size=0.5):
+        """Infers set of parameters that minimises an objective function (so far least squares).
+
+        Arguments:
+            y_0 {float} -- Starting point of inderence in parameter space.
+            initial_parameters {[type]} -- Starting point of inference in parameter space.
+        
+        Keyword Arguments:
+            step_size {float} -- Step-size of optimizer in parameter space. (default: {0.5})
+        
+        Returns:
+            optimal_parameters -- Set of parameters that minimise the objective function.
+        """
+        print('Parameters are being infered...\n')
         initial_parameters.append(y_0)
-        xopt, _ = cma.fmin2(self._objective_function, initial_parameters, step_size)
-        return xopt
+        self.optimal_parameters, _ = cma.fmin2(self._objective_function, initial_parameters, step_size)
+        return self.optimal_parameters
+
+    def plot(self):
+        """Method to visualise the success/failure of the parameter inference.
+        """
+        # Solve ODEmodel with otimal parameters.
+        ODEmodel = lambda t, x: self.model(t, x, self.optimal_parameters[0])
+        # instantiate ODE model
+        model = euler(ODEmodel)
+        t_0 = self.data_time[0]
+        t_final = self.data_time[-1]
+        numerical_estimate = model.integrate(h=self.h, t_0=t_0, t_final=t_final, y_0=self.optimal_parameters[-1])
+
+        # Generate plot.
+        plt.figure(figsize=(6,6))
+        # Scatter plot data.
+        plt.scatter(x=self.data_time, y=self.data_y, color='gray', edgecolors='darkgreen', alpha=0.5, label='data')
+        # Line plot fitted model
+        plt.plot(numerical_estimate[0, :], numerical_estimate[1, :], color='black', label='model')
+
+        plt.xlabel('time')
+        plt.ylabel('state variable')
+        plt.legend()
+
+        plt.show()
 
     def _objective_function(self, parameters):
         """Least squares objective function to be minimised in the process of parameter inference.
