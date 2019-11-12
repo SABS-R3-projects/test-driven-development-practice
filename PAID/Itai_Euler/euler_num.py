@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import cma
+from PAID.Itai_Euler import AnalyticalSol
 
 
 class ODENumerical:
@@ -41,11 +42,13 @@ class ODENumerical:
         euler_array = self.euler_solution()
         euler_with_noise = self.euler_with_noise()
         x_values = np.arange(0,len(euler_array),1)
+        analytical_sol = AnalyticalSol().analytical_euler()
         plt.scatter(x_values,euler_with_noise, color = "yellow", edgecolors="black")
         plt.plot(euler_array, color = "red")
+        plt.plot(analytical_sol, color = "green")
         plt.ylabel("N values")
         plt.xlabel("Time scale")
-        plt.legend(["Numerical Solution","Euler solution + Noise"])
+        plt.legend(["Numerical Solution","Analytical Solution","Euler solution + Noise"])
         plt.title("Solving the Logistic function with Euler's Method")
         plt.show()
 
@@ -78,10 +81,11 @@ class ODENumerical:
         plt.title("Plotting best fit using CMA-ES Algorithm")
         plt.show()
 
-a = ODENumerical()
-print(a.lambda_val)
-print(a.c)
-a.plot_func()
-a.scoring_func()
-print(a.lambda_val)
-print(a.c)
+#a = ODENumerical()
+#print(a.differential_func(4))
+#print(a.lambda_val)
+#print(a.c)
+#a.plot_func()
+#a.scoring_func()
+#print(a.lambda_val)
+#print(a.c)
