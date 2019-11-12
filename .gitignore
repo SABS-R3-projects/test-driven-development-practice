@@ -6,3 +6,13 @@ __pycache__
 
 ### visual studio code
 .vscode
+
+### test caching
+.pytest_cache
+.hypothesis
+
+### literature
+*.pdf
+
+### cma
+outcmaes
