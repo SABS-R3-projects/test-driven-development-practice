@@ -32,9 +32,6 @@ def test_infer_parameters():
     step_size = 0.1
     estimated_parameters = problem.infer_parameters(y_0=initial_y0, initial_parameters=initial_parameters, step_size=step_size)
 
-    print('estimated params: ', estimated_parameters)
-    print('exact params: ', exact_parameters)
-
     assert np.allclose(a=estimated_parameters, b=exact_parameters, rtol=5.0e-2)
 
 
