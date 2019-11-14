@@ -125,11 +125,12 @@ class MCMCInferenceProblem(InferenceProblem):
                  model: Callable[[float, float, List[float]], float],
                  data: np.ndarray,
                  h=0.001) -> None:
-        super(MCMCInferenceProblem, self).__init__(self, model, data, h)
+        super(MCMCInferenceProblem, self).__init__(model, data, h)
 
     def infer_parameters(self,
                          y_0: float,
                          initial_parameters: List[float],
+                         initial_noise: float,
                          valid_parameter_interval: np.ndarray,
                          sampling_stepsize: np.ndarray,
                          max_iterations=1000) -> List[np.ndarray]:
