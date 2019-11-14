@@ -128,10 +128,12 @@ class MCMCInferenceProblem(InferenceProblem):
         super(MCMCInferenceProblem, self).__init__(self, model, data, h)
 
     def infer_parameters(self,
-                         initial_parameters: np.ndarray,
+                         y_0: float,
+                         initial_parameters: List[float],
                          valid_parameter_interval: np.ndarray,
                          sampling_stepsize: np.ndarray,
                          max_iterations=1000) -> List[np.ndarray]:
+        initial_parameters.append(y_0)
         self.min_parameters = valid_parameter_interval[:, 0]
         self.max_parameters = valid_parameter_interval[:, 1]
         self.number_parameters = len(initial_parameters)
@@ -155,11 +157,11 @@ class MCMCInferenceProblem(InferenceProblem):
         # plot distribution of solution based on sampling parameters from posterior.
         pass
 
-    def _find_posterior(self, initial_parameters: np.ndarray, max_iterations: int) -> List[np.ndarray]:
+    def _find_posterior(self, initial_parameters: List[float], max_iterations: int) -> List[np.ndarray]:
         parameter_history = np.empty(shape=(self.number_parameters, max_iterations))
         parameter_history[:, 0] = initial_parameters
 
-        current_parameters = initial_parameters
+        current_parameters = np.array(initial_parameters) # to make future type explicit
         number_accepted_parameters = 0 # book-keeping
         for _ in range(max_iterations):
             proposed_parameters = self._propose_step(current_parameters)
@@ -171,6 +173,8 @@ class MCMCInferenceProblem(InferenceProblem):
                 current_parameters = proposed_parameters
                 parameter_history[:, number_accepted_parameters] = current_parameters
 
+        # through away unused space in the container
+        parameter_history = parameter_history[:, :number_accepted_parameters + 1]
         posteriors = self._convert_history_to_distribution(parameter_history)
 
         return posteriors
@@ -194,24 +198,54 @@ class MCMCInferenceProblem(InferenceProblem):
                 # parameters out of bounds, i.e. prior weight is zero and thus leads to rejection.
                 return -np.inf
 
-        
+        # splitting parameters into parameters needed for ODE integration and noise std.
+        proposed_model_parameters = proposed_parameters[:-1]
+        proposed_std = proposed_parameters[-1]
 
-        #return posterior_ratio
-        pass
+        current_model_parameters = current_parameters[:-1]
+        current_std = current_parameters[-1]
 
-    def _are_parameters_accepted(self, log_posterior_ratio: float) -> Bool:
-        # check whether proposed parameters are accepted
-        pass
+        # compute log-ratio
+        number_data_points = len(self.data_y)
+        if proposed_std ** 2 == 0:
+            proposed_std += 1e-5 # avoid dividing by zero
+
+        log_posterior_ratio = - (self._objective_function(proposed_model_parameters) / (2 * proposed_std ** 2)
+                              - self._objective_function(current_model_parameters) / (2 * current_std ** 2)
+                              + number_data_points * (np.log(proposed_std) - np.log(current_std)))
+
+        return log_posterior_ratio
+
+    def _are_parameters_accepted(self, log_posterior_ratio: float) -> bool:
+        if log_posterior_ratio >= 0:
+            return True
+        else:
+            random_number = np.random.uniform(low=0.0, high=1.0, size=1)
+            if np.log(random_number) <= log_posterior_ratio:
+                return True
+            else:
+                return False
 
     def _convert_history_to_distribution(self, parameter_history: np.ndarray) -> List[np.ndarray]:
-        # convert history of samples into distributions. mean of bin egdes is taken as corresponding parameter value.
-        pass
+        number_accepted_parameters = parameter_history.shape[1]
+        warm_up_phase = int(0.25 * number_accepted_parameters)
+        parameter_history = parameter_history[:, warm_up_phase:]
 
-    def _objective_function(self, parameters: List[float]) -> float:
+        posteriors = []
+        for parameter in parameter_history:
+            hist, bin_egdes = np.histogram(parameter, bins='auto', density=True)
+            bin_size = (bin_egdes[1] - bin_egdes[0]) / 2
+            parameter_values = bin_egdes[:-1] + bin_size / 2 # set value to center of bin
+            parameter_posterior = np.vstack(tup=(parameter_values, hist))
+            posteriors.append(parameter_posterior)
+
+        return posteriors
+
+    def _objective_function(self, parameters: np.ndarray) -> float:
         """Least squares objective function to be minimised in the process of parameter inference.
 
         Arguments:
-            parameters {List[float]} -- Set of parameters that are used to solve the ODE model.
+            parameters {np.ndarray} -- Set of parameters that are used to solve the ODE model.
                 The last parameter i.e. parameters[-1] is assumed to be the initial value of the
                 state variable.
         Return:
