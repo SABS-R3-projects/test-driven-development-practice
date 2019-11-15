@@ -62,10 +62,6 @@ def metropolis_hastings(likelihood_computer, prior, transition_model, param_init
 accepted, rejected = metropolis_hastings(least_squares, prior, transition_model, [1, 10], 500, observation, acceptance)
 print(accepted)
 
-
-
-
-
 #print(accepted)
 #print(manual_log_like_normal([1, 10], observation))
 #plt.plot(accepted[0:])

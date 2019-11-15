@@ -24,7 +24,7 @@ class ODENumerical:
         self.euler_with_noise_array = []
 
     def differential_func(self, N):
-        #A function that encodes for the right handside of the Logistic ODE
+        #A function that encodes for the right handside of the Logistic Model's ODE
         return self.lambda_val*(1 - (float(N)/self.c))*N
 
     def euler_solution(self):
@@ -94,10 +94,10 @@ class ODENumerical:
         plt.title("Plotting best fit using CMA-ES Algorithm")
         plt.show()
 
-a = ODENumerical()
-print(a.lambda_val)
-print(a.c)
-a.plot_func()
-a.scoring_func()
-print(a.lambda_val)
-print(a.c)
+# a = ODENumerical()
+# print(a.lambda_val)
+# print(a.c)
+# a.plot_func()
+# a.scoring_func()
+# print(a.lambda_val)
+# print(a.c)
