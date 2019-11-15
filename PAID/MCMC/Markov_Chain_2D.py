@@ -116,7 +116,7 @@ def main():
         if 0.0 < next_N_0 < 1.0:
             next_guess = guess(accepted_guess.Lambda + random.choice(prop.y), next_N_0, data.times)
             next_guess.error = next_guess.calc_error(data.data, data.times)
-            accepted_guess = dec.accept_or_reject_1(accepted_guess, next_guess, results, guess_number, data)
+            accepted_guess = dec.accept_or_reject_1(accepted_guess, next_guess, results, guess_number)
             guess_number += 1
     return results, accepted_guess
 
