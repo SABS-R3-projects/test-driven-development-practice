@@ -80,7 +80,6 @@ def metropolis_hastings(likelihood_computer, prior, transition_model, param_init
     return np.array(accepted), np.array(rejected)
 accepted, rejected = metropolis_hastings(manual_log_like_normal,prior,transition_model,[mu_obs,0.1], 50000,observation,acceptance)
 print(accepted)
-plt.plot(accepted, 'r+')
-plt.show()
 plt.plot(rejected, color = 'green')
+plt.plot(accepted, 'r+')
 plt.show()
