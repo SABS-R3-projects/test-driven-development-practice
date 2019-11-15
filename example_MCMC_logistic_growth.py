@@ -21,9 +21,9 @@ ODEmodel = lambda t, x, Lambda: Lambda * x * (1 - x)
 
 problem = MCMCInferenceProblem(ODEmodel, data)
 
-initial_parameters = [1.5] # initial lambda
-initial_y0 = 0.15
-initial_noise = 0.08
+initial_parameters = [1.0] # initial lambda
+initial_y0 = 0.1
+initial_noise = 0.05
 step_size = 0.1
 
 lambda_interval = np.array([0.0, 10.0])
@@ -31,7 +31,7 @@ y0_interval = np.array([0.0, 1.0])
 std_interval = np.array([1.0e-5, 10])
 valid_parameter_interval = np.vstack(tup=(lambda_interval, y0_interval, std_interval))
 
-sampling_stepsize = np.array([0.1, 0.1, 0.02])
+sampling_stepsize = np.array([0.01, 0.01, 0.005])
 estimated_parameters, mean, std = problem.infer_parameters(initial_parameters=initial_parameters,
                                                 y_0=initial_y0,
                                                 initial_noise=initial_noise,

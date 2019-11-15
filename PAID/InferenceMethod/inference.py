@@ -150,10 +150,10 @@ class MCMCInferenceProblem(InferenceProblem):
             hist, param_values = parameter_posterior
             max_id = np.argmax(hist)
             optimal_parameters[param_id] = param_values[max_id]
-            mean_parameters[param_id] = np.sum(param_values * hist)
+            mean_parameters[param_id] = np.sum(param_values * hist) / np.sum(hist)
             parameter_std[param_id] = np.sqrt(np.sum(
                 (param_values-mean_parameters[param_id]) ** 2 * hist
-            ))
+            ) / np.sum(hist))
             #TODO:
             #parameter_std[param_id] = self._compute_std(parameter_posterior)
 
@@ -242,11 +242,12 @@ class MCMCInferenceProblem(InferenceProblem):
         parameter_history = parameter_history[:, warm_up_phase:]
 
         posteriors = []
-        for parameter in parameter_history:
+        for id_p, parameter in enumerate(parameter_history):
             hist, bin_egdes = np.histogram(parameter, bins='auto', density=True)
             bin_size = (bin_egdes[1] - bin_egdes[0]) / 2
+            print('The bin size of parameter %d is %f' % (id_p, bin_size))
             parameter_values = bin_egdes[:-1] + bin_size / 2 # set value to center of bin
-            parameter_posterior = np.vstack(tup=(parameter_values, hist))
+            parameter_posterior = np.vstack(tup=(hist, parameter_values))
             posteriors.append(parameter_posterior)
 
         return posteriors
