@@ -1,6 +1,7 @@
 import cma
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 from abc import ABC, abstractmethod
 from typing import Callable, List
 from tqdm import tqdm
@@ -135,6 +136,27 @@ class MCMCInferenceProblem(InferenceProblem):
                          valid_parameter_interval: np.ndarray,
                          sampling_stepsize: np.ndarray,
                          max_iterations=1000) -> List[np.ndarray]:
+        """Infer parameters of model from data using a Markov Chain Monte Carlo sampler. Priors are assumed
+        to be uniform.
+
+
+        Arguments:
+            initial_parameters {List[float]} -- Starting point of sampler in parameter space. Here only the
+                                                parameters of the ODE are passed. Initial value of the state
+                                                variable y_0 and data noise are treated separately.
+            y_0 {float} -- Initial value of state variable for sampling.
+            initial_noise {float} -- Initial value for standard deviation around model for sampling.
+            valid_parameter_interval {np.ndarray} -- Bounds on model parameters for implementation of the
+                                                     priors. Shape (# parameters, 2), where first value is minimum
+                                                     and second value is maximum.
+            sampling_stepsize {np.ndarray} -- Average step size, i.e. std of multivariate normal, of sampler.
+        
+        Keyword Arguments:
+            max_iterations {int} -- Number of iterations run by the sampler. (default: {1000})
+        
+        Returns:
+            List[np.ndarray] -- [infered parameters, mean of posterior, std of posterior]
+        """
         initial_parameters.append(y_0)
         initial_parameters.append(initial_noise)
         self.min_parameters = valid_parameter_interval[:, 0]
@@ -151,35 +173,69 @@ class MCMCInferenceProblem(InferenceProblem):
             max_id = np.argmax(hist)
             self.optimal_parameters[param_id] = param_values[max_id]
             mean_parameters[param_id] = np.sum(param_values * hist) / np.sum(hist)
-            parameter_std[param_id] = np.sqrt(np.sum(
-                (param_values-mean_parameters[param_id]) ** 2 * hist
-            ) / np.sum(hist))
-            #TODO:
-            #parameter_std[param_id] = self._compute_std(parameter_posterior)
+            parameter_std[param_id] = np.sqrt(
+                np.sum((param_values-mean_parameters[param_id]) ** 2 * hist)
+                / np.sum(hist)
+            )
 
         return [self.optimal_parameters, mean_parameters ,parameter_std]
 
-    def plot(self):
-        fig, ax = plt.subplots(1, self.number_parameters, figsize=(18, 6))
+    def plot(self) -> None:
+        """Visualise infered model. Plots data and the model with infered parameters as well as posterior distributions of
+        parameters.
+
+        Returns:
+            None
+        """
+        fig = plt.figure(figsize=(18,8) ,tight_layout=True)
+        gs = gridspec.GridSpec(2, self.number_parameters)
+
+        ### plot data and fit.
+        ax = fig.add_subplot(gs[0, :])
+        # Solve ODEmodel with otimal parameters.
+        ODEmodel = lambda t, x: self.model(t, x, self.optimal_parameters[0])
+        y_0 = self.optimal_parameters[-2]
+        std = self.optimal_parameters[-1]
+        # instantiate ODE model
+        model = euler(ODEmodel)
+        t_0 = self.data_time[0]
+        t_final = self.data_time[-1]
+        numerical_estimate = model.integrate(h=self.h, t_0=t_0, t_final=t_final, y_0=y_0)
+
+        # Scatter plot data.
+        ax.scatter(x=self.data_time, y=self.data_y, color='gray', edgecolors='darkgreen', alpha=0.5, label='data')
+        # Line plot fitted model
+        ax.plot(numerical_estimate[0, :], numerical_estimate[1, :], color='black', label='model')
+        # plot standard deviation
+        ax.fill_between(numerical_estimate[0, :], numerical_estimate[1, :], numerical_estimate[1, :] - std, color='grey', alpha=0.3)
+        ax.fill_between(numerical_estimate[0, :], numerical_estimate[1, :], numerical_estimate[1, :] + std, color='grey', alpha=0.3)
+
+        ax.set_xlabel('time')
+        ax.set_ylabel('state variable')
+        ax.legend()
 
         for id_p, posterior in enumerate(self.posteriors):
-            ax[id_p].set_ylabel('posterior of parameter %d [# counts]' % id_p)
-            ax[id_p].set_xlabel('parameter %d [dimensionless]' % id_p)
+            ax = fig.add_subplot(gs[1, id_p])
+            ax.set_ylabel('posterior of parameter %d [# counts]' % id_p)
+            ax.set_xlabel('parameter %d [dimensionless]' % id_p)
             hist, param_values = posterior
-            ax[id_p].plot(param_values, hist, color='black', label='histogram')
-            ax[id_p].axvline(x=self.optimal_parameters[id_p], color='darkgreen', label='optimum')
+            ax.plot(param_values, hist, color='black', label='histogram')
+            ax.axvline(x=self.optimal_parameters[id_p], color='darkgreen', label='optimum')
 
-            ax[id_p].legend()
+            ax.legend()
 
-        plt.show(fig)
-
-
-        # plot parameter posteriors
-        # plot ideal solution
-        # plot distribution of solution based on sampling parameters from posterior.
-        pass
+        plt.show()
 
     def _find_posterior(self, initial_parameters: List[float], max_iterations: int) -> List[np.ndarray]:
+        """Computes posterior distributions of parameters using MCMC sampling.
+
+        Arguments:
+            initial_parameters {List[float]} -- Starting point in parameter space of MCMC sampler.
+            max_iterations {int} -- Total number of steps in parameter space that are proposed in the sampling process.
+        
+        Returns:
+            posteriors {List[np.ndarray]} -- Posterior distributions of parameters as arrays (counts, parameter value).
+        """
         parameter_history = np.empty(shape=(self.number_parameters, max_iterations))
         parameter_history[:, 0] = initial_parameters
 
@@ -203,7 +259,14 @@ class MCMCInferenceProblem(InferenceProblem):
         return posteriors
 
     def _propose_step(self, current_parameters: np.ndarray) -> np.ndarray:
+        """Draws a step proposal in parameter space from a multivariate normal distribution centered around the current parameter set.
+
+        Arguments:
+            current_parameters {np.ndarray} -- Current point in parameter space.
         
+        Returns:
+            parameter proposal {np.ndarray} -- Proposed point in parameter space.
+        """
         covariance_matrix = np.diag(self.sampling_covariance)
         parameter_proposal = np.random.multivariate_normal(mean=current_parameters, cov=covariance_matrix)
 
@@ -241,6 +304,17 @@ class MCMCInferenceProblem(InferenceProblem):
         return log_posterior_ratio
 
     def _are_parameters_accepted(self, log_posterior_ratio: float) -> bool:
+        """Checks whether the posterior weight of the proposed parameter set is larger/equal or smaller than the posterior weight
+        of the current parameter set. Accept if proposed posterior is larger or equal. If proposed posterior is smaller accept with
+        a probability equal to the ratio of the posteriors.
+
+        Arguments:
+            log_posterior_ratio {float} -- Logarithm of the ratio of the posterior weight of the proposed parameter set and the
+                                           posterior weight of the current parameter set.
+        
+        Returns:
+            bool -- Booleian whether or not proposed parameter set is accepted.
+        """
         if log_posterior_ratio >= 0:
             return True
         else:
@@ -251,6 +325,14 @@ class MCMCInferenceProblem(InferenceProblem):
                 return False
 
     def _convert_history_to_distribution(self, parameter_history: np.ndarray) -> List[np.ndarray]:
+        """Converts bin edges to their center values to make the histogram better interpretable as distbrution.
+
+        Arguments:
+            parameter_history {np.ndarray} -- List of histogram of sampled parameters.
+        
+        Returns:
+            posteriors List[np.ndarray] -- List of posterior distributions of parameters.
+        """
         number_accepted_parameters = parameter_history.shape[1]
         warm_up_phase = int(0.25 * number_accepted_parameters)
         parameter_history = parameter_history[:, warm_up_phase:]
