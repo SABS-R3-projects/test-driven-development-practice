@@ -143,13 +143,13 @@ class MCMCInferenceProblem(InferenceProblem):
         self.sampling_covariance = sampling_stepsize ** 2
         self.posteriors = self._find_posterior(initial_parameters, max_iterations)
 
-        optimal_parameters = np.empty(shape=self.number_parameters)
+        self.optimal_parameters = np.empty(shape=self.number_parameters)
         mean_parameters = np.empty(shape=self.number_parameters)
         parameter_std = np.empty(shape=self.number_parameters)
         for param_id, parameter_posterior in enumerate(self.posteriors):
             hist, param_values = parameter_posterior
             max_id = np.argmax(hist)
-            optimal_parameters[param_id] = param_values[max_id]
+            self.optimal_parameters[param_id] = param_values[max_id]
             mean_parameters[param_id] = np.sum(param_values * hist) / np.sum(hist)
             parameter_std[param_id] = np.sqrt(np.sum(
                 (param_values-mean_parameters[param_id]) ** 2 * hist
@@ -157,9 +157,23 @@ class MCMCInferenceProblem(InferenceProblem):
             #TODO:
             #parameter_std[param_id] = self._compute_std(parameter_posterior)
 
-        return [optimal_parameters, mean_parameters ,parameter_std]
+        return [self.optimal_parameters, mean_parameters ,parameter_std]
 
     def plot(self):
+        fig, ax = plt.subplots(1, self.number_parameters, figsize=(18, 6))
+
+        for id_p, posterior in enumerate(self.posteriors):
+            ax[id_p].set_ylabel('posterior of parameter %d [# counts]' % id_p)
+            ax[id_p].set_xlabel('parameter %d [dimensionless]' % id_p)
+            hist, param_values = posterior
+            ax[id_p].plot(param_values, hist, color='black', label='histogram')
+            ax[id_p].axvline(x=self.optimal_parameters[id_p], color='darkgreen', label='optimum')
+
+            ax[id_p].legend()
+
+        plt.show(fig)
+
+
         # plot parameter posteriors
         # plot ideal solution
         # plot distribution of solution based on sampling parameters from posterior.
@@ -243,7 +257,7 @@ class MCMCInferenceProblem(InferenceProblem):
 
         posteriors = []
         for id_p, parameter in enumerate(parameter_history):
-            hist, bin_egdes = np.histogram(parameter, bins='auto', density=True)
+            hist, bin_egdes = np.histogram(parameter, bins='auto', density=False)
             bin_size = (bin_egdes[1] - bin_egdes[0]) / 2
             print('The bin size of parameter %d is %f' % (id_p, bin_size))
             parameter_values = bin_egdes[:-1] + bin_size / 2 # set value to center of bin

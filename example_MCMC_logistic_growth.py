@@ -36,12 +36,13 @@ estimated_parameters, mean, std = problem.infer_parameters(initial_parameters=in
                                                 y_0=initial_y0,
                                                 initial_noise=initial_noise,
                                                 valid_parameter_interval=valid_parameter_interval,
-                                                sampling_stepsize=sampling_stepsize)
+                                                sampling_stepsize=sampling_stepsize,
+                                                max_iterations=5000)
 
 print('infered parameters: ', estimated_parameters)
 print('mean of posteriors: ', mean)
 print('std of posteriors: ', std)
 print('exact parameters: ', exact_parameters)
 
-#problem.plot()
+problem.plot()
 
