@@ -38,31 +38,33 @@ class result_dist:
         self.Lambda_data = []
 
 class decision:
-    def accept_or_reject_1(self, accepted_guess, next_guess, results, guess_number):
+    def accept_or_reject_1(self, accepted_guess, next_guess, results, guess_number, data):
+        # log_post_ratio = (next_guess.error/0.005) - (accepted_guess.error/0.005) + (len(data.times)-np.log(0.05))
+        # if log_post_ratio >= 0:
         if next_guess.error < accepted_guess.error:
             accepted_guess = next_guess
-            if guess_number > 10000:
+            if guess_number > 2500:
                 results.N_0_data.append(accepted_guess.N_0)
                 results.Lambda_data.append(accepted_guess.Lambda)
             return accepted_guess
         else:
-            accepted_guess = self.accept_or_reject_2(accepted_guess, next_guess, results, guess_number)
+            accepted_guess = self.accept_or_reject_2(accepted_guess, next_guess, results, guess_number, data)
         return accepted_guess
 
-    def accept_or_reject_2(self, accepted_guess, next_guess, results, guess_number):
-        ratio = accepted_guess.error/next_guess.error
+    def accept_or_reject_2(self, accepted_guess, next_guess, results, guess_number, data):
+        ratio = np.log(accepted_guess.error)/np.log(next_guess.error)
         draw = random.uniform(0, 1)
-        if draw > ratio:
+        if draw >= ratio:
             accepted_guess = next_guess
-            if guess_number > 10000:
+            if guess_number > 2500:
                 results.N_0_data.append(accepted_guess.N_0)
                 results.Lambda_data.append(accepted_guess.Lambda)
         return accepted_guess
 
 def plot(results):
     fig, (ax1, ax2) = plt.subplots(1, 2)
-    ax1.hist(results.N_0_data, bins=50)
-    ax2.hist(results.Lambda_data, bins=50)
+    ax1.hist(results.N_0_data, bins=20)
+    ax2.hist(results.Lambda_data, bins=20)
     plt.show()
 
 def main():
@@ -76,16 +78,16 @@ def main():
     prop = proposal_dist()
     guess_number = 1
 
-    while guess_number < 50000:
+    while guess_number < 10000:
         next_N_0 = accepted_guess.N_0 + random.choice(prop.x)
         if 0.0 < next_N_0 < 1.0:
             next_guess = guess(accepted_guess.Lambda + random.choice(prop.y), next_N_0, data.times)
             next_guess.error = next_guess.calc_error(data.data, data.times)
-            accepted_guess = dec.accept_or_reject_1(accepted_guess, next_guess, results, guess_number)
+            accepted_guess = dec.accept_or_reject_1(accepted_guess, next_guess, results, guess_number, data)
             guess_number += 1
     return results, accepted_guess
 
 
 results, accepted_guess = main()
 plot(results)
-
+data = target_dist()

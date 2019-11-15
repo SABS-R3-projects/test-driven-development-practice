@@ -26,7 +26,7 @@ def test_ac_re_2():
     for i in range(100):
         new.error = 1
         newer.error = 9
-        dec.accept_or_reject_1(new, newer, res, 10100)
+        dec.accept_or_reject_1(new, newer, res, 10100, data)
     assert len(res.N_0_data) > 20 and len(res.Lambda_data) > 20
 
 
