@@ -39,18 +39,16 @@ class ODENumerical:
             time_counter +=0.5
             times_array.append(time_counter)
         euler_array = np.asanyarray(euler_array)
-
-
         self.euler_solution_array = euler_array
+        return euler_array, times_array
 
-
-
-
-        return euler_array
+    def times_array(self):
+        euler_solution, time_array = self.euler_solution()
+        return time_array
 
     def euler_with_noise(self):
         #A function that adds some normally distributed noise (mu = 0, and std = 0.25) to the numerical solution array and returns a noisy dataset
-        numerical_sol = self.euler_solution()
+        numerical_sol, time_array = self.euler_solution()
         mu, sigma = 0, 0.5
         noise = np.random.normal(mu, sigma, [np.shape(numerical_sol)[0], ])
         numerical_noisy = numerical_sol + noise
@@ -59,7 +57,7 @@ class ODENumerical:
 
     def plot_func(self):
         #A function that plots the analytical solution, numerical solution and the noisy numerical solution
-        euler_array = self.euler_solution()
+        euler_array, _ = self.euler_solution()
         euler_with_noise = self.euler_with_noise()
         x_values = np.arange(0,len(euler_array),1)
         analytical_sol = AnalyticalSol().analytical_euler()
@@ -95,7 +93,7 @@ class ODENumerical:
         print("Updating the values of lambda and c")
         self.lambda_val = self.minimization_sol[0]
         self.c = self.minimization_sol[1]
-        new_fit = self.euler_solution()
+        new_fit, _ = self.euler_solution()
         plt.scatter(x_values, self.euler_with_noise_array, color = "yellow", edgecolors="black")
         plt.plot(x_values, new_fit, "r")
         plt.ylabel("N values")
@@ -104,10 +102,11 @@ class ODENumerical:
         plt.title("Plotting best fit using CMA-ES Algorithm")
         plt.show()
 
-# a = ODENumerical()
+#a = ODENumerical()
+# a.euler_solution()
 # print(a.lambda_val)
 # print(a.c)
-# a.plot_func()
-# a.scoring_func()
+#a.plot_func()
+#a.scoring_func()
 # print(a.lambda_val)
 # print(a.c)
