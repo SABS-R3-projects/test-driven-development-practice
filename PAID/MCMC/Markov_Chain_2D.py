@@ -6,6 +6,9 @@ import random
 
 
 class guess:
+    """
+    N_0 and Lambda parameters chosen, and the error calculated
+    """
     def __init__(self, Lambda, N_0, times):
         self.error = None
         self.N_0 = N_0
@@ -13,6 +16,11 @@ class guess:
         self.curve = lgd(times, 0.0, N_0, Lambda)
 
     def calc_error(self, data, times):
+        """
+        :param data: list, data points
+        :param times: list, time points at which to calculate difference
+        :return: float, sum of squares of difference at these time points
+        """
         error = 0
         for i in range(len(times)):
             error += (data[i]-self.curve[i])**2
@@ -20,6 +28,9 @@ class guess:
 
 
 class proposal_dist:
+    """
+    A 2D proposal distribution to generate steps from each N_0/Lambda parameter guess
+    """
     def __init__(self):
         self.mean = [0, 0]
         self.cov = [[5e-4, 0], [0, 5e-4]]
@@ -27,20 +38,34 @@ class proposal_dist:
 
 
 class target_dist:
+    """
+    Generates data to train the functions
+    """
     def __init__(self):
         self.times = np.arange(0, 15, 15.0/500)
         self.data = create_data(self.times)
 
 
 class result_dist:
+    """
+    Stores the accepted N_0 and Lambda values to generate the parameter distribution
+    """
     def __init__(self):
         self.N_0_data = []
         self.Lambda_data = []
 
 class decision:
-    def accept_or_reject_1(self, accepted_guess, next_guess, results, guess_number, data):
-        # log_post_ratio = (next_guess.error/0.005) - (accepted_guess.error/0.005) + (len(data.times)-np.log(0.05))
-        # if log_post_ratio >= 0:
+    """
+    Decides whether to accept or reject a guess based on the error and the ratio of errors
+    """
+    def accept_or_reject_1(self, accepted_guess, next_guess, results, guess_number):
+        """
+        :param accepted_guess: class, has N_0, Lambda and error values
+        :param next_guess: class, has new N_0, Lambda and error values
+        :param results: class, stores accepted values
+        :param guess_number: integer, accepted values are only stored after 1/4 of iterations have been completed
+        :return: class, new or old accepted guess
+        """
         if next_guess.error < accepted_guess.error:
             accepted_guess = next_guess
             if guess_number > 2500:
@@ -48,10 +73,14 @@ class decision:
                 results.Lambda_data.append(accepted_guess.Lambda)
             return accepted_guess
         else:
-            accepted_guess = self.accept_or_reject_2(accepted_guess, next_guess, results, guess_number, data)
+            accepted_guess = self.accept_or_reject_2(accepted_guess, next_guess, results, guess_number)
         return accepted_guess
 
-    def accept_or_reject_2(self, accepted_guess, next_guess, results, guess_number, data):
+    def accept_or_reject_2(self, accepted_guess, next_guess, results, guess_number):
+        """
+        Called if new error is larger than old error.
+        Decides randomly whether to accept or reject new guess, with information on the error ratio.
+        """
         ratio = np.log(accepted_guess.error)/np.log(next_guess.error)
         draw = random.uniform(0, 1)
         if draw >= ratio:
@@ -62,6 +91,10 @@ class decision:
         return accepted_guess
 
 def plot(results):
+    """
+    :param results: class, stored accepted N_0 and Lambda results
+    :return: plots the distributions of the two parameters
+    """
     fig, (ax1, ax2) = plt.subplots(1, 2)
     ax1.hist(results.N_0_data, bins=20)
     ax2.hist(results.Lambda_data, bins=20)
