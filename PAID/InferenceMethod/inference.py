@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 from typing import Callable, List
+from tqdm import tqdm
 
 from PAID.EulerMethod.euler import euler
 
@@ -128,29 +129,35 @@ class MCMCInferenceProblem(InferenceProblem):
         super(MCMCInferenceProblem, self).__init__(model, data, h)
 
     def infer_parameters(self,
-                         y_0: float,
                          initial_parameters: List[float],
+                         y_0: float,
                          initial_noise: float,
                          valid_parameter_interval: np.ndarray,
                          sampling_stepsize: np.ndarray,
                          max_iterations=1000) -> List[np.ndarray]:
         initial_parameters.append(y_0)
+        initial_parameters.append(initial_noise)
         self.min_parameters = valid_parameter_interval[:, 0]
         self.max_parameters = valid_parameter_interval[:, 1]
         self.number_parameters = len(initial_parameters)
-        self.sampling_stepsize = sampling_stepsize
-        posteriors = self._find_posterior(initial_parameters, max_iterations)
+        self.sampling_covariance = sampling_stepsize ** 2
+        self.posteriors = self._find_posterior(initial_parameters, max_iterations)
 
         optimal_parameters = np.empty(shape=self.number_parameters)
+        mean_parameters = np.empty(shape=self.number_parameters)
         parameter_std = np.empty(shape=self.number_parameters)
-        for param_id, parameter_posterior in enumerate(posteriors):
+        for param_id, parameter_posterior in enumerate(self.posteriors):
             hist, param_values = parameter_posterior
             max_id = np.argmax(hist)
             optimal_parameters[param_id] = param_values[max_id]
+            mean_parameters[param_id] = np.sum(param_values * hist)
+            parameter_std[param_id] = np.sqrt(np.sum(
+                (param_values-mean_parameters[param_id]) ** 2 * hist
+            ))
             #TODO:
             #parameter_std[param_id] = self._compute_std(parameter_posterior)
 
-        return [optimal_parameters, parameter_std]
+        return [optimal_parameters, mean_parameters ,parameter_std]
 
     def plot(self):
         # plot parameter posteriors
@@ -164,7 +171,7 @@ class MCMCInferenceProblem(InferenceProblem):
 
         current_parameters = np.array(initial_parameters) # to make future type explicit
         number_accepted_parameters = 0 # book-keeping
-        for _ in range(max_iterations):
+        for _ in tqdm(range(max_iterations)):
             proposed_parameters = self._propose_step(current_parameters)
             log_posterior_ratio = self._compute_log_posterior_ratio(proposed_parameters, current_parameters)
             is_accepted = self._are_parameters_accepted(log_posterior_ratio)
@@ -175,14 +182,16 @@ class MCMCInferenceProblem(InferenceProblem):
                 parameter_history[:, number_accepted_parameters] = current_parameters
 
         # through away unused space in the container
+        print(number_accepted_parameters, " proposed steps have been accepted.")
         parameter_history = parameter_history[:, :number_accepted_parameters + 1]
         posteriors = self._convert_history_to_distribution(parameter_history)
 
         return posteriors
 
     def _propose_step(self, current_parameters: np.ndarray) -> np.ndarray:
-        covariance_matrix = np.diag(self.sampling_stepsize)
-        parameter_proposal = np.random.multivariate_normal(mean=current_parameters, cov=covariance_matrix, size=1)
+        
+        covariance_matrix = np.diag(self.sampling_covariance)
+        parameter_proposal = np.random.multivariate_normal(mean=current_parameters, cov=covariance_matrix)
 
         return parameter_proposal
 
@@ -195,7 +204,7 @@ class MCMCInferenceProblem(InferenceProblem):
             log_posterior_ratio {float} -- ratio of log-posteriors of proposed and current parameter set.
         """
         for id_p, parameter in enumerate(proposed_parameters):
-            if (parameter < self.min_parameters[id_p]) or (parameter > self.max_parameters):
+            if (parameter < self.min_parameters[id_p]) or (parameter > self.max_parameters[id_p]):
                 # parameters out of bounds, i.e. prior weight is zero and thus leads to rejection.
                 return -np.inf
 
