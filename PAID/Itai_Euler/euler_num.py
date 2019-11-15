@@ -31,11 +31,21 @@ class ODENumerical:
         #A function that returns an array with the numerical solution of the Logistic Model
         euler_array = [self.n_init]
         n = self.n_init
+        time_counter = 0
+        times_array = [0]
         while len(euler_array) <= 150:
             n += self.dt*self.differential_func(n)
             euler_array.append(n)
+            time_counter +=0.5
+            times_array.append(time_counter)
         euler_array = np.asanyarray(euler_array)
+
+
         self.euler_solution_array = euler_array
+
+
+
+
         return euler_array
 
     def euler_with_noise(self):

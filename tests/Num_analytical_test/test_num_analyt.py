@@ -32,5 +32,6 @@ class MyTestCase(unittest.TestCase):
         self.differential_function = None
 
 if __name__== 'main':
+    #Run unittest
     unittest.main()
 
