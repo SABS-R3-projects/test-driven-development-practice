@@ -37,7 +37,7 @@ estimated_parameters, mean, std = problem.infer_parameters(initial_parameters=in
                                                 initial_noise=initial_noise,
                                                 valid_parameter_interval=valid_parameter_interval,
                                                 sampling_stepsize=sampling_stepsize,
-                                                max_iterations=5000)
+                                                max_iterations=500)
 
 print('infered parameters: ', estimated_parameters)
 print('mean of posteriors: ', mean)
