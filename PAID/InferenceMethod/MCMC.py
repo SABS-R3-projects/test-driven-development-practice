@@ -27,7 +27,7 @@ class MarkocChainMonteCarlo(object)
 
         return noisey_Data
 
-    def log_Likelihood_ratio(theta, theta_new, self.data, sigma =0.05, sd =0.01):
+    def log_Likelihood_ratio(theta, theta_new, self, sigma =0.05, sd =0.01):
         x_0 = theta[0]
         Lambda = theta[1]
 
@@ -44,26 +44,34 @@ class MarkocChainMonteCarlo(object)
         return log_posterior_ratio
 
 
-    def acceptance(theta, theta_new):
-        if theta_new > theta:
+    def _acceptance(theta, theta_new):
+        if log_Ratio >= 0:
             return True
         else:
-            accept=np.random.uniform(0,1)
-            return (accept < (np.exp(x_new-x)))
+            x = np.random.uniform(0,1)
+            if np.log(x) < log_Ratio: 
+                return True
+            else:
+                return False
 
-    transition_model = lambda x: [theta,np.random.multivariate_normal(theta,covariance,)]
+
 
     def met_hast_estimation(x_0, Lambda, noise_Data, samples):
-    
+
+
         theta = [x_0, Lambda]
         cov = np.eye(len(theta)) * 0.01 ** 2
+        transition_model = lambda theta, cov: [theta,np.random.multivariate_normal(theta,cov)]
+
+        noise_Data = self.data
+
         samples = samples
         accepted = np.empty(shape=(samples,2))
-        nd = noise_Data
         accepted_params = 0
+
         for i in range(samples):
-            theta_new = transition(theta, cov)
-            log_ratio = log_Likelihood_ratio(theta,theta_new,nd)
+            theta_new = transition_model(theta, cov)
+            log_ratio = log_Likelihood_ratio(theta,theta_new,noise_Data)
             if acceptance_criteria(log_ratio):
                 theta = theta_new
                 accepted[accepted_params,:] = theta_new
