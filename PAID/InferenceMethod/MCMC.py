@@ -27,18 +27,22 @@ class MarkocChainMonteCarlo(object)
 
         return noisey_Data
 
-    def Likelihood(x_0, Lambda,sigma, sd):
-        exact_model = solution(x_0, Lambda)
-        nD = noise_Data(exact_model) ##put elsewhere...
-        #ip = InferenceProblem(exact_model,noise_Data)
-        #least_squares = ip._objective_function(parameters)
-        least_square = np.sum((exact_model - nD)**2)
-        pi=math.pi
-        normalising_factor = 1/math.sqrt(2*pi*(sigma**2))
-        Gaussian = normalising_factor * np.exp(-least_square/2*(sigma**2))
-        logGaussian = np.log(Gaussian)
+    def log_Likelihood_ratio(theta, theta_new, self.data, sigma =0.05, sd =0.01):
+        x_0 = theta[0]
+        Lambda = theta[1]
 
-        return logGaussian
+        x_0_new = theta_new[0]
+        Lambda_new = theta_new[1]
+
+        exact_model = self.solution(x_0=x_0, Lambda=Lambda)
+        exact_model_new = self.solution(x_0= x_0_new, Lambda =Lambda_new)
+
+        nD = self.data
+
+        log_posterior_ratio = -np.sum((exact_model_new - nD)**2)/(2 * sigma ** 2) + np.sum((exact_model - nD)**2)/(2*(sigma**2))
+
+        return log_posterior_ratio
+
 
     def acceptance(theta, theta_new):
         if theta_new > theta:
@@ -51,27 +55,19 @@ class MarkocChainMonteCarlo(object)
 
     def met_hast_estimation(x_0, Lambda, noise_Data, samples):
     
-    theta = [x_0, Lambda]
-    cov = np.eye(len(theta)) * 0.01 ** 2
-    samples = samples
-    accepted = np.empty(shape=(samples,2))
-    nd = noise_Data
-    accepted_params = 0
-    for i in range(samples):
-        theta_new = transition(theta, cov)
-        log_ratio = log_Likelihood_ratio(theta,theta_new,nd)
-        if acceptance_criteria(log_ratio):
-            theta = theta_new
-            accepted[accepted_params,:] = theta_new
-            accepted_params += 1
-            print(theta_new)
-             
+        theta = [x_0, Lambda]
+        cov = np.eye(len(theta)) * 0.01 ** 2
+        samples = samples
+        accepted = np.empty(shape=(samples,2))
+        nd = noise_Data
+        accepted_params = 0
+        for i in range(samples):
+            theta_new = transition(theta, cov)
+            log_ratio = log_Likelihood_ratio(theta,theta_new,nd)
+            if acceptance_criteria(log_ratio):
+                theta = theta_new
+                accepted[accepted_params,:] = theta_new
+                accepted_params += 1
+                print(theta_new)
 
         return accepted[:accepted_params]
-
-
-    def prior(theta):
-        if theta[0] > 0 and theta[0] < 1:
-            return 0
-        else:
-            return 1
