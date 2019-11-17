@@ -6,11 +6,12 @@ import matplotlib.pyplot as plt
 import math
 
 class MarkocChainMonteCarlo(object)
-    def __init__ (self, data):
+    def __init__ (self, model, data):
         self.data = data
+        self.model = model
 
     def solution(x_0, Lambda,times=10, samples=100):
-    
+
         data_time = np.linspace(0, times, samples)
         exact_solution = logistic_growth_dimensionless(times=data_time, x_0=x_0, Lambda=Lambda)
 
@@ -47,6 +48,27 @@ class MarkocChainMonteCarlo(object)
             return (accept < (np.exp(x_new-x)))
 
     transition_model = lambda x: [theta,np.random.multivariate_normal(theta,covariance,)]
+
+    def met_hast_estimation(x_0, Lambda, noise_Data, samples):
+    
+    theta = [x_0, Lambda]
+    cov = np.eye(len(theta)) * 0.01 ** 2
+    samples = samples
+    accepted = np.empty(shape=(samples,2))
+    nd = noise_Data
+    accepted_params = 0
+    for i in range(samples):
+        theta_new = transition(theta, cov)
+        log_ratio = log_Likelihood_ratio(theta,theta_new,nd)
+        if acceptance_criteria(log_ratio):
+            theta = theta_new
+            accepted[accepted_params,:] = theta_new
+            accepted_params += 1
+            print(theta_new)
+             
+
+        return accepted[:accepted_params]
+
 
     def prior(theta):
         if theta[0] > 0 and theta[0] < 1:
